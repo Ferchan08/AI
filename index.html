@@ -1946,37 +1946,53 @@
     const byUser = objectives.byUser || {};
     const userObj = byUser[currentUser] || {};
 
-    const sharedGoalEl = document.getElementById('sharedGoal');
-    const sharedDateEl = document.getElementById('sharedTargetDate');
+    const sharedGoalEl   = document.getElementById('sharedGoal');
+    const sharedDateEl   = document.getElementById('sharedTargetDate');
     const personalGoalEl = document.getElementById('personalGoal');
-    const progressEl = document.getElementById('personalProgress');
+    const progressEl     = document.getElementById('personalProgress');
 
     if (!sharedGoalEl) return; // pestaña aún no montada
 
-    // Siempre mostramos el objetivo compartido (solo lo edita el líder)
+    // Contenedores de los campos individuales
+    const personalGroup  = personalGoalEl?.closest('.form-group');
+    const progressGroup  = progressEl?.closest('.form-group');
+
+    // Objetivo compartido (siempre visible)
     sharedGoalEl.value = shared.goal || '';
     sharedDateEl.value = shared.targetDate || '';
 
-    // Si NO es líder → puede escribir solo su objetivo personal
-    // Si es líder → puede editar solo el objetivo compartido, no el personal
     if (isLeader) {
+        // Líder: SOLO objetivo compartido
         sharedGoalEl.disabled = false;
         sharedDateEl.disabled = false;
-        personalGoalEl.disabled = true;
-        progressEl.disabled = true;
-        personalGoalEl.value = '';
-        progressEl.value = 0;
+
+        // Ocultamos por completo la parte individual
+        if (personalGroup) personalGroup.style.display = 'none';
+        if (progressGroup) progressGroup.style.display = 'none';
+
+        // Limpiamos valores por si acaso
+        if (personalGoalEl) personalGoalEl.value = '';
+        if (progressEl)     progressEl.value = 0;
     } else {
+        // Becarios: ven objetivo compartido en solo lectura
         sharedGoalEl.disabled = true;
         sharedDateEl.disabled = true;
+
+        // Mostramos y habilitamos los campos individuales
+        if (personalGroup) personalGroup.style.display = 'block';
+        if (progressGroup) progressGroup.style.display = 'block';
+
         personalGoalEl.disabled = false;
-        progressEl.disabled = false;
+        progressEl.disabled     = false;
+
         personalGoalEl.value = userObj.personalGoal || '';
-        progressEl.value = userObj.progress != null ? userObj.progress : 0;
+        progressEl.value     = userObj.progress != null ? userObj.progress : 0;
     }
 
     updateProgressBar();
 }
+
+   
 
 function saveObjectives() {
     if (!currentUser) return;
