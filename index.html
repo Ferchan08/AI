@@ -1970,6 +1970,20 @@
     if (!currentUser) return;
 
     const isLeader = teamMembers[currentUser]?.isLeader;
+    const tabGoals = document.getElementById('tab-goals'); // pestaña de becario
+
+    // 🔒 Si es líder (Irán), NO debe ver esta sección
+    if (isLeader) {
+        if (tabGoals) {
+            tabGoals.style.display = 'none';
+        }
+        return; // importante: no sigas llenando campos
+    }
+
+    // 👇 Becarios: sí muestran la pestaña
+    if (tabGoals) {
+        tabGoals.style.display = 'block';
+    }
 
     const shared = objectives.shared || {};
     const byUser = objectives.byUser || {};
@@ -1982,41 +1996,18 @@
 
     if (!sharedGoalEl) return; // pestaña aún no montada
 
-    // Contenedores de los campos individuales
-    const personalGroup  = personalGoalEl?.closest('.form-group');
-    const progressGroup  = progressEl?.closest('.form-group');
+    // Objetivo compartido (solo lectura para becarios)
+    sharedGoalEl.value   = shared.goal || '';
+    sharedDateEl.value   = shared.targetDate || '';
+    sharedGoalEl.disabled = true;
+    sharedDateEl.disabled = true;
 
-    // Objetivo compartido (siempre visible)
-    sharedGoalEl.value = shared.goal || '';
-    sharedDateEl.value = shared.targetDate || '';
+    // Objetivo individual del becario
+    personalGoalEl.disabled = false;
+    progressEl.disabled     = false;
 
-    if (isLeader) {
-        // Líder: SOLO objetivo compartido
-        sharedGoalEl.disabled = false;
-        sharedDateEl.disabled = false;
-
-        // Ocultamos por completo la parte individual
-        if (personalGroup) personalGroup.style.display = 'none';
-        if (progressGroup) progressGroup.style.display = 'none';
-
-        // Limpiamos valores por si acaso
-        if (personalGoalEl) personalGoalEl.value = '';
-        if (progressEl)     progressEl.value = 0;
-    } else {
-        // Becarios: ven objetivo compartido en solo lectura
-        sharedGoalEl.disabled = true;
-        sharedDateEl.disabled = true;
-
-        // Mostramos y habilitamos los campos individuales
-        if (personalGroup) personalGroup.style.display = 'block';
-        if (progressGroup) progressGroup.style.display = 'block';
-
-        personalGoalEl.disabled = false;
-        progressEl.disabled     = false;
-
-        personalGoalEl.value = userObj.personalGoal || '';
-        progressEl.value     = userObj.progress != null ? userObj.progress : 0;
-    }
+    personalGoalEl.value = userObj.personalGoal || '';
+    progressEl.value     = userObj.progress != null ? userObj.progress : 0;
 
     updateProgressBar();
 }
