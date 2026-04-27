@@ -1938,45 +1938,74 @@
         }
         
         function loadObjectives() {
-        const shared = objectives.shared || {};
-        const byUser = objectives.byUser || {};
-        const userObj = byUser[currentUser] || {};
+    if (!currentUser) return;
 
-        const sharedGoalEl = document.getElementById('sharedGoal');
-        const sharedDateEl = document.getElementById('sharedTargetDate');
-        const personalGoalEl = document.getElementById('personalGoal');
-        const progressEl = document.getElementById('personalProgress');
+    const isLeader = teamMembers[currentUser]?.isLeader;
 
-        if (!sharedGoalEl) return; // pestaña aún no montada
+    const shared = objectives.shared || {};
+    const byUser = objectives.byUser || {};
+    const userObj = byUser[currentUser] || {};
 
-        sharedGoalEl.value = shared.goal || '';
-        sharedDateEl.value = shared.targetDate || '';
+    const sharedGoalEl = document.getElementById('sharedGoal');
+    const sharedDateEl = document.getElementById('sharedTargetDate');
+    const personalGoalEl = document.getElementById('personalGoal');
+    const progressEl = document.getElementById('personalProgress');
 
+    if (!sharedGoalEl) return; // pestaña aún no montada
+
+    // Siempre mostramos el objetivo compartido (solo lo edita el líder)
+    sharedGoalEl.value = shared.goal || '';
+    sharedDateEl.value = shared.targetDate || '';
+
+    // Si NO es líder → puede escribir solo su objetivo personal
+    // Si es líder → puede editar solo el objetivo compartido, no el personal
+    if (isLeader) {
+        sharedGoalEl.disabled = false;
+        sharedDateEl.disabled = false;
+        personalGoalEl.disabled = true;
+        progressEl.disabled = true;
+        personalGoalEl.value = '';
+        progressEl.value = 0;
+    } else {
+        sharedGoalEl.disabled = true;
+        sharedDateEl.disabled = true;
+        personalGoalEl.disabled = false;
+        progressEl.disabled = false;
         personalGoalEl.value = userObj.personalGoal || '';
         progressEl.value = userObj.progress != null ? userObj.progress : 0;
+    }
 
-        updateProgressBar();
-        }
+    updateProgressBar();
+}
 
-        function saveObjectives() {
-        if (!objectives.shared) objectives.shared = {};
-        if (!objectives.byUser) objectives.byUser = {};
+function saveObjectives() {
+    if (!currentUser) return;
 
-        const sharedGoalEl = document.getElementById('sharedGoal');
-        const sharedDateEl = document.getElementById('sharedTargetDate');
-        const personalGoalEl = document.getElementById('personalGoal');
-        const progressEl = document.getElementById('personalProgress');
+    const isLeader = teamMembers[currentUser]?.isLeader;
 
+    if (!objectives.shared) objectives.shared = {};
+    if (!objectives.byUser) objectives.byUser = {};
+
+    const sharedGoalEl = document.getElementById('sharedGoal');
+    const sharedDateEl = document.getElementById('sharedTargetDate');
+    const personalGoalEl = document.getElementById('personalGoal');
+    const progressEl = document.getElementById('personalProgress');
+
+    // Líder: SOLO actualiza objetivo compartido
+    if (isLeader) {
         objectives.shared.goal = sharedGoalEl.value;
-        objectives.shared.targetDate = sharedDateEl.value;
+        objectives.shared.targetDate = sharedDateEl.value || '';
+    } else {
+        // Becarios: SOLO actualizan su objetivo individual
         objectives.byUser[currentUser] = {
             personalGoal: personalGoalEl.value,
             progress: parseInt(progressEl.value) || 0
         };
+    }
 
-        saveToFirebase('objectives', objectives);
-        updateProgressBar();
-        }
+    saveToFirebase('objectives', objectives);
+    updateProgressBar();
+}
 
         function updateProgressBar() {
         const progressEl = document.getElementById('personalProgress');
@@ -2075,6 +2104,19 @@ function deleteCV() {
       loadPersonalData();
     }
   }
+}
+function downloadMemberCV(memberId) {
+    const data = personalData[memberId];
+    if (!data || !data.cvFileData || !data.cvFileName) {
+        alert('Este miembro no tiene CV cargado.');
+        return;
+    }
+    const link = document.createElement('a');
+    link.href = data.cvFileData;      // ✅ base64 guardado en Firebase
+    link.download = data.cvFileName;  // nombre original
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
         function isHoliday(dateStr) {
