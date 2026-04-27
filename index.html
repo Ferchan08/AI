@@ -1274,7 +1274,35 @@
                         <div id="memberActivitiesList"></div>
                     </div>
                 </div>
-
+                <div id="member-tab-goals" class="tab-content">
+                    <div class="section">
+                        <h2>🎯 Objetivos de <span id="memberNameGoals"></span></h2>
+                
+                        <div class="form-group">
+                            <label>Objetivo compartido del equipo (3 meses)</label>
+                            <textarea id="memberSharedGoal" rows="3" disabled></textarea>
+                        </div>
+                
+                        <div class="form-group">
+                            <label>Fecha meta del objetivo compartido</label>
+                            <input type="date" id="memberSharedTargetDate" disabled>
+                        </div>
+                
+                        <hr style="margin: 25px 0; border: none; border-top: 1px solid #eee;">
+                
+                        <div class="form-group">
+                            <label>Objetivo individual de <span id="memberNameGoals2"></span> (3 meses)</label>
+                            <textarea id="memberPersonalGoal" rows="3" disabled></textarea>
+                        </div>
+                
+                        <div class="form-group">
+                            <label>Avance del objetivo individual: <span id="memberProgressLabel">0%</span></label>
+                            <div style="height: 18px; background: #eee; border-radius: 10px; overflow: hidden; margin-top: 8px;">
+                                <div id="memberProgressBar" style="height: 100%; width: 0%; background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div id="member-tab-hours" class="tab-content">
                     <div class="section">
                         <h2>⏰ Control de Horas</h2>
@@ -1284,35 +1312,7 @@
             </div>
         </div>
     </div>
-    <div id="member-tab-goals" class="tab-content">
-        <div class="section">
-            <h2>🎯 Objetivos de <span id="memberNameGoals"></span></h2>
-    
-            <div class="form-group">
-                <label>Objetivo compartido del equipo (3 meses)</label>
-                <textarea id="memberSharedGoal" rows="3" disabled></textarea>
-            </div>
-    
-            <div class="form-group">
-                <label>Fecha meta del objetivo compartido</label>
-                <input type="date" id="memberSharedTargetDate" disabled>
-            </div>
-    
-            <hr style="margin: 25px 0; border: none; border-top: 1px solid #eee;">
-    
-            <div class="form-group">
-                <label>Objetivo individual de <span id="memberNameGoals2"></span> (3 meses)</label>
-                <textarea id="memberPersonalGoal" rows="3" disabled></textarea>
-            </div>
-    
-            <div class="form-group">
-                <label>Avance del objetivo individual: <span id="memberProgressLabel">0%</span></label>
-                <div style="height: 18px; background: #eee; border-radius: 10px; overflow: hidden; margin-top: 8px;">
-                    <div id="memberProgressBar" style="height: 100%; width: 0%; background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);"></div>
-                </div>
-            </div>
-        </div>
-    </div>
+   
     <!-- Modals -->
     <div class="modal" id="addMemberModal">
         <div class="modal-content">
