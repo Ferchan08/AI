@@ -1261,6 +1261,35 @@
                     <button class="btn" style="background: #95a5a6; margin-bottom: 20px;" onclick="clearFilter()">✕ Limpiar Filtro</button>
                     <div id="filteredActivitiesList"></div>
                 </div>
+                <div class="section" id="supervisorObjectivesSection">
+                    <h2>🎯 Objetivos del Equipo (3 meses)</h2>
+                  
+                    <div class="form-group">
+                      <label>Objetivo compartido del equipo</label>
+                      <textarea id="supervisorSharedGoal" rows="2" disabled></textarea>
+                    </div>
+                  
+                    <div class="form-group">
+                      <label>Fecha meta del objetivo compartido</label>
+                      <input type="date" id="supervisorSharedTargetDate" disabled>
+                    </div>
+                  
+                    <div class="form-group">
+                      <label>Avance del objetivo de equipo: <span id="supervisorSharedProgressLabel">0%</span></label>
+                      <div style="height: 18px; background: #eee; border-radius: 10px; overflow: hidden; margin-top: 8px;">
+                        <div id="supervisorSharedProgressBar"
+                             style="height: 100%; width: 0%; background: linear-gradient(135deg,#3498db 0%,#2980b9 100%);">
+                        </div>
+                      </div>
+                    </div>
+                  
+                    <div id="supervisorSharedProgressHistory" style="margin-top: 10px; font-size: 14px; color:#555;"></div>
+                  
+                    <hr style="margin: 25px 0; border: none; border-top: 1px solid #eee;">
+                  
+                    <h3 style="margin-bottom: 10px;">📋 Avances individuales</h3>
+                    <div id="supervisorMembersProgress" style="font-size: 14px; color:#555;"></div>
+                  </div>
             </div>
 
             <!-- Team Tab -->
@@ -1972,36 +2001,55 @@
         });
 
         function showDashboard() {
-    console.log('📊 showDashboard llamada para usuario:', currentUser);
+  console.log('📊 showDashboard llamada para usuario:', currentUser);
 
-    const user = teamMembers[currentUser];
-    console.log('👤 Usuario encontrado:', user);
+  const user = teamMembers[currentUser];
+  console.log('👤 Usuario encontrado:', user);
 
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('mainDashboard').classList.add('active');
-    document.getElementById('userName').textContent = user.name;
-    document.getElementById('userRole').textContent = user.role;
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('mainDashboard').classList.add('active');
+  document.getElementById('userName').textContent = user.name;
+  document.getElementById('userRole').textContent = user.role;
 
-    const imgSrc = user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=667eea&color=fff&size=120`;
-    document.getElementById('userAvatar').src = imgSrc;
+  const imgSrc = user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=667eea&color=fff&size=120`;
+  document.getElementById('userAvatar').src = imgSrc;
 
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('entryDate').value = today;
-    document.getElementById('activityStartDate').value = today;
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('entryDate').value = today;
+  document.getElementById('activityStartDate').value = today;
 
-    if (user.isLeader) {
-        // ✅ Supervisores ven su propio dashboard + pestaña de becario (incluye Objetivos)
-        document.getElementById('becarioDashboard').style.display = 'block';
-        document.getElementById('supervisorDashboard').style.display = 'block';
-        loadSupervisorDashboard();
-        loadBecarioDashboard();
-    } else {
-        document.getElementById('becarioDashboard').style.display = 'block';
-        document.getElementById('supervisorDashboard').style.display = 'none';
-        loadBecarioDashboard();
-    }
+  if (user.isLeader) {
+    // ✅ SOLO dashboard de supervisor
+    document.getElementById('becarioDashboard').style.display = 'none';
+    document.getElementById('supervisorDashboard').style.display = 'block';
+    loadSupervisorDashboard();
+  } else {
+    document.getElementById('becarioDashboard').style.display = 'block';
+    document.getElementById('supervisorDashboard').style.display = 'none';
+    loadBecarioDashboard();
+  }
+}
+function loadChecklist() {
+  const container = document.getElementById('checklistContainer');
+  if (!container) return;
+
+  const userChecklist = checklists[currentUser] || {};
+
+  container.innerHTML = checklistItems.map((item, index) => `
+    <div class="checklist-item">
+      <input type="checkbox" id="check_${index}"
+        ${userChecklist[item] ? 'checked' : ''}
+        onchange="saveChecklist('${item}', this.checked)">
+      <label for="check_${index}">${item}</label>
+    </div>
+  `).join('');
 }
 
+function saveChecklist(item, checked) {
+  if (!checklists[currentUser]) checklists[currentUser] = {};
+  checklists[currentUser][item] = checked;
+  saveToFirebase('checklists', checklists);
+}
         function loadBecarioDashboard() {
         loadChecklist();
         loadPersonalData();
@@ -2684,8 +2732,62 @@ function downloadMemberCV(memberId) {
 
             displayActivities(activities, 'allActivitiesList', false);
             loadTeamGrid();
+            loadSupervisorObjectives();
         }
+        function loadSupervisorObjectives() {
+  if (!objectives.shared) objectives.shared = {};
+  if (!objectives.byUser) objectives.byUser = {};
 
+  const shared    = objectives.shared;
+  const byUser    = objectives.byUser;
+
+  const goalEl    = document.getElementById('supervisorSharedGoal');
+  const dateEl    = document.getElementById('supervisorSharedTargetDate');
+  const labelEl   = document.getElementById('supervisorSharedProgressLabel');
+  const barEl     = document.getElementById('supervisorSharedProgressBar');
+  const histEl    = document.getElementById('supervisorSharedProgressHistory');
+  const membersEl = document.getElementById('supervisorMembersProgress');
+
+  if (!goalEl) return;
+
+  goalEl.value = shared.goal || '';
+  dateEl.value = shared.targetDate || '';
+
+  const prog = shared.progress != null ? shared.progress : 0;
+  labelEl.textContent = prog + '%';
+  barEl.style.width   = prog + '%';
+
+  // Historial equipo
+  const log = (shared.progressLog || []).slice().sort((a,b) =>
+    (a.date || '').localeCompare(b.date || '')
+  );
+  if (!log.length) {
+    histEl.innerHTML = '<em>No hay avances de equipo registrados aún.</em>';
+  } else {
+    histEl.innerHTML = `
+      <strong>Historial de avances de equipo:</strong>
+      <ul style="margin-top:8px; padding-left:18px;">
+        ${log.map(item => `
+          <li>${item.date || 'Sin fecha'}: <strong>${item.value}%</strong></li>
+        `).join('')}
+      </ul>
+    `;
+  }
+
+  // Avances individuales por miembro
+  const rows = Object.keys(teamMembers)
+    .filter(id => !teamMembers[id].isLeader)
+    .map(id => {
+      const member = teamMembers[id];
+      const obj    = byUser[id] || {};
+      const p      = obj.progress != null ? obj.progress : 0;
+      return `<li><strong>${member.name}</strong>: ${p}%</li>`;
+    });
+
+  membersEl.innerHTML = rows.length
+    ? `<ul style="margin-top:4px; padding-left:18px;">${rows.join('')}</ul>`
+    : '<em>No hay miembros con objetivos registrados aún.</em>';
+}
         function filterActivitiesByStatus(status) {
             const filtered = activities.filter(a => a.status === status);
             const title = status === 'open' ? '🔓 Actividades Abiertas' : '✅ Actividades Cerradas';
