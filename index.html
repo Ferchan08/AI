@@ -1266,12 +1266,15 @@
                   
                     <div class="form-group">
                       <label>Objetivo compartido del equipo</label>
-                      <textarea id="supervisorSharedGoal" rows="2" disabled></textarea>
+                      
+                      <textarea id="supervisorSharedGoal" rows="2"
+          onchange="saveSharedFromSupervisor()" oninput="saveSharedFromSupervisor()"></textarea>
                     </div>
                   
                     <div class="form-group">
                       <label>Fecha meta del objetivo compartido</label>
-                      <input type="date" id="supervisorSharedTargetDate" disabled>
+                      <input type="date" id="supervisorSharedTargetDate"
+       onchange="saveSharedFromSupervisor()">
                     </div>
                   
                     <div class="form-group">
@@ -2018,14 +2021,18 @@
   document.getElementById('entryDate').value = today;
   document.getElementById('activityStartDate').value = today;
 
+  const tabGoals = document.getElementById('tab-goals');
+
   if (user.isLeader) {
     // ✅ SOLO dashboard de supervisor
     document.getElementById('becarioDashboard').style.display = 'none';
     document.getElementById('supervisorDashboard').style.display = 'block';
+    if (tabGoals) tabGoals.style.display = 'none';   // ⬅️ ocultar pestaña Objetivos
     loadSupervisorDashboard();
   } else {
     document.getElementById('becarioDashboard').style.display = 'block';
     document.getElementById('supervisorDashboard').style.display = 'none';
+    if (tabGoals) tabGoals.style.display = 'block';
     loadBecarioDashboard();
   }
 }
@@ -2064,10 +2071,13 @@ function saveChecklist(item, checked) {
     const isLeader = teamMembers[currentUser]?.isLeader;
     const tabGoals = document.getElementById('tab-goals');
 
-    // Mostrar siempre la pestaña Objetivos
+    // Solo mostrar la pestaña Objetivos a becarios
     if (tabGoals) {
-        tabGoals.style.display = 'block';
+        tabGoals.style.display = isLeader ? 'none' : 'block';
     }
+
+    // Si es líder, NO llenar nada aquí (usa el bloque en el dashboard de supervisor)
+    if (isLeader) return;
 
     const shared    = objectives.shared || {};
     const byUser    = objectives.byUser || {};
@@ -2081,21 +2091,21 @@ function saveChecklist(item, checked) {
 
     if (!sharedGoalEl) return;
 
-    // Objetivo compartido (solo líder puede editar)
-    sharedGoalEl.value = shared.goal || '';
-    sharedDateEl.value = shared.targetDate || '';
-    sharedProgEl.value = shared.progress != null ? shared.progress : 0;
+    // Objetivo compartido (solo lectura para becario)
+    sharedGoalEl.value   = shared.goal || '';
+    sharedDateEl.value   = shared.targetDate || '';
+    sharedProgEl.value   = shared.progress != null ? shared.progress : 0;
 
-    sharedGoalEl.disabled   = !isLeader;
-    sharedDateEl.disabled   = !isLeader;
-    sharedProgEl.disabled   = !isLeader;
+    sharedGoalEl.disabled = true;
+    sharedDateEl.disabled = true;
+    sharedProgEl.disabled = true;
 
-    // Objetivo individual (solo becarios editan su propio objetivo)
+    // Objetivo individual (becario)
     personalGoalEl.value = userObj.personalGoal || '';
     personalProgEl.value = userObj.progress != null ? userObj.progress : 0;
 
-    personalGoalEl.disabled = isLeader;
-    personalProgEl.disabled = isLeader;
+    personalGoalEl.disabled = false;
+    personalProgEl.disabled = false;
 
     updateTeamProgressBar();
     updatePersonalProgressBar();
