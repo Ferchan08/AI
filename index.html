@@ -1262,7 +1262,7 @@
                     <button class="btn" style="background: #95a5a6; margin-bottom: 20px;" onclick="clearFilter()">✕ Limpiar Filtro</button>
                     <div id="filteredActivitiesList"></div>
                 </div>
-                <div class="section" id="supervisorObjectivesSection">
+                
                     <h2>🎯 Objetivos del Equipo (3 meses)</h2>
                   
                     <div class="form-group">
@@ -1313,7 +1313,40 @@
                     <div id="allActivitiesList"></div>
                 </div>
             </div>
+<!-- Objectives Tab (NUEVO) -->
+<div id="supervisor-tab-objectives" class="tab-content">
+    <div class="section" id="supervisorObjectivesSection">
+        <h2>🎯 Objetivos del Equipo (3 meses)</h2>
 
+        <div class="form-group">
+          <label>Objetivo compartido del equipo</label>
+          <textarea id="supervisorSharedGoal" rows="2"
+                    onchange="saveSharedFromSupervisor()" oninput="saveSharedFromSupervisor()"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Fecha meta del objetivo compartido</label>
+          <input type="date" id="supervisorSharedTargetDate"
+                 onchange="saveSharedFromSupervisor()">
+        </div>
+
+        <div class="form-group">
+          <label>Avance del objetivo de equipo: <span id="supervisorSharedProgressLabel">0%</span></label>
+          <div style="height: 18px; background: #eee; border-radius: 10px; overflow: hidden; margin-top: 8px;">
+            <div id="supervisorSharedProgressBar"
+                 style="height: 100%; width: 0%; background: linear-gradient(135deg,#3498db 0%,#2980b9 100%);">
+            </div>
+          </div>
+        </div>
+
+        <div id="supervisorSharedProgressHistory" style="margin-top: 10px; font-size: 14px; color:#555;"></div>
+
+        <hr style="margin: 25px 0; border: none; border-top: 1px solid #eee;">
+
+        <h3 style="margin-bottom: 10px;">📋 Avances individuales</h3>
+        <div id="supervisorMembersProgress" style="font-size: 14px; color:#555;"></div>
+    </div>
+</div>
             <!-- Member Detail View -->
             <div class="member-detail-view" id="memberDetailView">
                 <button class="btn back-btn" onclick="backToTeam()" style="margin-bottom: 25px;">
@@ -2798,6 +2831,24 @@ function downloadMemberCV(memberId) {
   membersEl.innerHTML = rows.length
     ? `<ul style="margin-top:4px; padding-left:18px;">${rows.join('')}</ul>`
     : '<em>No hay miembros con objetivos registrados aún.</em>';
+}
+function saveSharedFromSupervisor() {
+    if (!objectives.shared) objectives.shared = {};
+    const shared = objectives.shared;
+
+    const goalEl = document.getElementById('supervisorSharedGoal');
+    const dateEl = document.getElementById('supervisorSharedTargetDate');
+
+    if (!goalEl || !dateEl) return;
+
+    shared.goal       = goalEl.value;
+    shared.targetDate = dateEl.value || '';
+
+    objectives.shared = shared;
+    saveToFirebase('objectives', objectives);
+
+    // refrescar vista (historial y avances individuales)
+    loadSupervisorObjectives();
 }
         function filterActivitiesByStatus(status) {
             const filtered = activities.filter(a => a.status === status);
