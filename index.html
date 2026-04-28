@@ -1133,9 +1133,11 @@
     <div class="section">
       <h2>🎯 Objetivos (3 meses)</h2>
   
+      <!-- ✅ Objetivo compartido del equipo -->
       <div class="form-group">
         <label>Objetivo compartido del equipo (3 meses)</label>
-        <textarea id="sharedGoal" rows="3" placeholder="Describe el objetivo en grupo para todo el equipo"
+        <textarea id="sharedGoal" rows="3"
+                  placeholder="Describe el objetivo en grupo para todo el equipo"
                   onchange="saveObjectives()" oninput="saveObjectives()"></textarea>
       </div>
   
@@ -1144,22 +1146,65 @@
         <input type="date" id="sharedTargetDate" onchange="saveObjectives()">
       </div>
   
-      <hr style="margin: 25px 0; border: none; border-top: 1px solid #eee;">
+      <div class="form-group">
+        <label>Avance del objetivo de equipo: <span id="sharedProgressLabel">0%</span></label>
+        <input type="range" id="sharedProgress" min="0" max="100" value="0"
+               oninput="updateTeamProgressBar(); saveObjectives()">
+        <div style="height: 18px; background: #eee; border-radius: 10px; overflow: hidden; margin-top: 8px;">
+          <div id="sharedProgressBar"
+               style="height: 100%; width: 0%; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+          </div>
+        </div>
+      </div>
   
       <div class="form-group">
+        <label>Registrar avance de equipo (por fecha)</label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: center;">
+          <input type="date" id="sharedProgressDate">
+          <input type="number" id="sharedProgressValue" min="0" max="100"
+                 placeholder="% logrado (0-100)">
+          <button type="button" class="btn" style="background:#3498db;"
+                  onclick="addSharedProgress()">➕ Agregar avance</button>
+        </div>
+        <small style="color:#666;">Se registra el avance del objetivo de equipo por fecha en porcentaje.</small>
+      </div>
+  
+      <div id="sharedProgressHistory" style="margin-top: 10px; font-size: 14px; color:#555;"></div>
+  
+      <hr style="margin: 25px 0; border: none; border-top: 1px solid #eee;">
+  
+      <!-- ✅ Objetivo individual -->
+      <div class="form-group">
         <label>Tu objetivo individual (3 meses)</label>
-        <textarea id="personalGoal" rows="3" placeholder="Escribe tu objetivo personal"
+        <textarea id="personalGoal" rows="3"
+                  placeholder="Escribe tu objetivo personal"
                   onchange="saveObjectives()" oninput="saveObjectives()"></textarea>
       </div>
   
       <div class="form-group">
-        <label>Avance de tu objetivo individual: <span id="progressLabel">0%</span></label>
+        <label>Avance de tu objetivo individual: <span id="personalProgressLabel">0%</span></label>
         <input type="range" id="personalProgress" min="0" max="100" value="0"
-               oninput="updateProgressBar(); saveObjectives()">
+               oninput="updatePersonalProgressBar(); saveObjectives()">
         <div style="height: 18px; background: #eee; border-radius: 10px; overflow: hidden; margin-top: 8px;">
-          <div id="progressBar" style="height: 100%; width: 0%; background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);"></div>
+          <div id="personalProgressBar"
+               style="height: 100%; width: 0%; background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);">
+          </div>
         </div>
       </div>
+  
+      <div class="form-group">
+        <label>Registrar avance individual (por fecha)</label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: center;">
+          <input type="date" id="personalProgressDate">
+          <input type="number" id="personalProgressValue" min="0" max="100"
+                 placeholder="% logrado (0-100)">
+          <button type="button" class="btn" style="background:#2ecc71;"
+                  onclick="addPersonalProgress()">➕ Agregar avance</button>
+        </div>
+        <small style="color:#666;">Se registra el avance de tu objetivo personal por fecha en porcentaje.</small>
+      </div>
+  
+      <div id="personalProgressHistory" style="margin-top: 10px; font-size: 14px; color:#555;"></div>
     </div>
   </div>
         <!-- Supervisor Dashboard -->
@@ -1279,26 +1324,25 @@
                         <h2>🎯 Objetivos de <span id="memberNameGoals"></span></h2>
                 
                         <div class="form-group">
-                            <label>Objetivo compartido del equipo (3 meses)</label>
-                            <textarea id="memberSharedGoal" rows="3" disabled></textarea>
-                        </div>
-                
-                        <div class="form-group">
-                            <label>Fecha meta del objetivo compartido</label>
-                            <input type="date" id="memberSharedTargetDate" disabled>
-                        </div>
-                
-                        <hr style="margin: 25px 0; border: none; border-top: 1px solid #eee;">
-                
-                        <div class="form-group">
                             <label>Objetivo individual de <span id="memberNameGoals2"></span> (3 meses)</label>
                             <textarea id="memberPersonalGoal" rows="3" disabled></textarea>
                         </div>
-                
+                        
+                        <div class="form-group">
+                            <label>Avance del objetivo de equipo: <span id="memberSharedProgressLabel">0%</span></label>
+                            <div style="height: 18px; background: #eee; border-radius: 10px; overflow: hidden; margin-top: 8px;">
+                                <div id="memberSharedProgressBar"
+                                     style="height: 100%; width: 0%; background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="form-group">
                             <label>Avance del objetivo individual: <span id="memberProgressLabel">0%</span></label>
                             <div style="height: 18px; background: #eee; border-radius: 10px; overflow: hidden; margin-top: 8px;">
-                                <div id="memberProgressBar" style="height: 100%; width: 0%; background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);"></div>
+                                <div id="memberProgressBar"
+                                     style="height: 100%; width: 0%; background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1928,35 +1972,35 @@
         });
 
         function showDashboard() {
-            console.log('📊 showDashboard llamada para usuario:', currentUser);
-            
-            const user = teamMembers[currentUser];
-            console.log('👤 Usuario encontrado:', user);
-            
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('mainDashboard').classList.add('active');
-            document.getElementById('userName').textContent = user.name;
-            document.getElementById('userRole').textContent = user.role;
-            
-            const imgSrc = user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=667eea&color=fff&size=120`;
-            document.getElementById('userAvatar').src = imgSrc;
+    console.log('📊 showDashboard llamada para usuario:', currentUser);
 
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('entryDate').value = today;
-            document.getElementById('activityStartDate').value = today;
+    const user = teamMembers[currentUser];
+    console.log('👤 Usuario encontrado:', user);
 
-            if (user.isLeader) {
-                document.getElementById('becarioDashboard').style.display = 'none';
-                document.getElementById('supervisorDashboard').style.display = 'block';
-                loadSupervisorDashboard();
-            } else {
-                document.getElementById('becarioDashboard').style.display = 'block';
-                document.getElementById('supervisorDashboard').style.display = 'none';
-                loadBecarioDashboard();
-            }
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('mainDashboard').classList.add('active');
+    document.getElementById('userName').textContent = user.name;
+    document.getElementById('userRole').textContent = user.role;
 
-            
-        }
+    const imgSrc = user.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=667eea&color=fff&size=120`;
+    document.getElementById('userAvatar').src = imgSrc;
+
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('entryDate').value = today;
+    document.getElementById('activityStartDate').value = today;
+
+    if (user.isLeader) {
+        // ✅ Supervisores ven su propio dashboard + pestaña de becario (incluye Objetivos)
+        document.getElementById('becarioDashboard').style.display = 'block';
+        document.getElementById('supervisorDashboard').style.display = 'block';
+        loadSupervisorDashboard();
+        loadBecarioDashboard();
+    } else {
+        document.getElementById('becarioDashboard').style.display = 'block';
+        document.getElementById('supervisorDashboard').style.display = 'none';
+        loadBecarioDashboard();
+    }
+}
 
         function loadBecarioDashboard() {
         loadChecklist();
@@ -1970,46 +2014,45 @@
     if (!currentUser) return;
 
     const isLeader = teamMembers[currentUser]?.isLeader;
-    const tabGoals = document.getElementById('tab-goals'); // pestaña de becario
+    const tabGoals = document.getElementById('tab-goals');
 
-    // 🔒 Si es líder (Irán), NO debe ver esta sección
-    if (isLeader) {
-        if (tabGoals) {
-            tabGoals.style.display = 'none';
-        }
-        return; // importante: no sigas llenando campos
-    }
-
-    // 👇 Becarios: sí muestran la pestaña
+    // Mostrar siempre la pestaña Objetivos
     if (tabGoals) {
         tabGoals.style.display = 'block';
     }
 
-    const shared = objectives.shared || {};
-    const byUser = objectives.byUser || {};
-    const userObj = byUser[currentUser] || {};
+    const shared    = objectives.shared || {};
+    const byUser    = objectives.byUser || {};
+    const userObj   = byUser[currentUser] || {};
 
     const sharedGoalEl   = document.getElementById('sharedGoal');
     const sharedDateEl   = document.getElementById('sharedTargetDate');
     const personalGoalEl = document.getElementById('personalGoal');
-    const progressEl     = document.getElementById('personalProgress');
+    const sharedProgEl   = document.getElementById('sharedProgress');
+    const personalProgEl = document.getElementById('personalProgress');
 
-    if (!sharedGoalEl) return; // pestaña aún no montada
+    if (!sharedGoalEl) return;
 
-    // Objetivo compartido (solo lectura para becarios)
-    sharedGoalEl.value   = shared.goal || '';
-    sharedDateEl.value   = shared.targetDate || '';
-    sharedGoalEl.disabled = true;
-    sharedDateEl.disabled = true;
+    // Objetivo compartido (solo líder puede editar)
+    sharedGoalEl.value = shared.goal || '';
+    sharedDateEl.value = shared.targetDate || '';
+    sharedProgEl.value = shared.progress != null ? shared.progress : 0;
 
-    // Objetivo individual del becario
-    personalGoalEl.disabled = false;
-    progressEl.disabled     = false;
+    sharedGoalEl.disabled   = !isLeader;
+    sharedDateEl.disabled   = !isLeader;
+    sharedProgEl.disabled   = !isLeader;
 
+    // Objetivo individual (solo becarios editan su propio objetivo)
     personalGoalEl.value = userObj.personalGoal || '';
-    progressEl.value     = userObj.progress != null ? userObj.progress : 0;
+    personalProgEl.value = userObj.progress != null ? userObj.progress : 0;
 
-    updateProgressBar();
+    personalGoalEl.disabled = isLeader;
+    personalProgEl.disabled = isLeader;
+
+    updateTeamProgressBar();
+    updatePersonalProgressBar();
+    renderProgressHistory('shared');
+    renderProgressHistory('personal');
 }
 
    
@@ -2022,50 +2065,149 @@ function saveObjectives() {
     if (!objectives.shared) objectives.shared = {};
     if (!objectives.byUser) objectives.byUser = {};
 
-    const sharedGoalEl = document.getElementById('sharedGoal');
-    const sharedDateEl = document.getElementById('sharedTargetDate');
-    const personalGoalEl = document.getElementById('personalGoal');
-    const progressEl = document.getElementById('personalProgress');
+    const shared    = objectives.shared;
+    const byUser    = objectives.byUser;
+    const userObj   = byUser[currentUser] || {};
 
-    // Líder: SOLO actualiza objetivo compartido
+    const sharedGoalEl   = document.getElementById('sharedGoal');
+    const sharedDateEl   = document.getElementById('sharedTargetDate');
+    const personalGoalEl = document.getElementById('personalGoal');
+    const sharedProgEl   = document.getElementById('sharedProgress');
+    const personalProgEl = document.getElementById('personalProgress');
+
     if (isLeader) {
-        objectives.shared.goal = sharedGoalEl.value;
-        objectives.shared.targetDate = sharedDateEl.value || '';
+        // Líder actualiza solo objetivo de equipo
+        shared.goal       = sharedGoalEl.value;
+        shared.targetDate = sharedDateEl.value || '';
+        shared.progress   = parseInt(sharedProgEl.value) || 0;
     } else {
-        // Becarios: SOLO actualizan su objetivo individual
-        objectives.byUser[currentUser] = {
-            personalGoal: personalGoalEl.value,
-            progress: parseInt(progressEl.value) || 0
-        };
+        // Becario actualiza solo su objetivo individual
+        userObj.personalGoal = personalGoalEl.value;
+        userObj.progress     = parseInt(personalProgEl.value) || 0;
+        byUser[currentUser]  = userObj;
     }
 
+    objectives.shared = shared;
+    objectives.byUser = byUser;
+
     saveToFirebase('objectives', objectives);
-    updateProgressBar();
 }
 
-        function updateProgressBar() {
-        const progressEl = document.getElementById('personalProgress');
-        const labelEl = document.getElementById('progressLabel');
-        const barEl = document.getElementById('progressBar');
-        if (!progressEl || !labelEl || !barEl) return;
+function updateTeamProgressBar() {
+    const progEl = document.getElementById('sharedProgress');
+    const label  = document.getElementById('sharedProgressLabel');
+    const bar    = document.getElementById('sharedProgressBar');
+    if (!progEl || !label || !bar) return;
 
-        const value = parseInt(progressEl.value) || 0;
-        labelEl.textContent = value + '%';
-        barEl.style.width = value + '%';
-        }
-        function loadChecklist() {
-            const container = document.getElementById('checklistContainer');
-            const userChecklist = checklists[currentUser] || {};
-            
-            container.innerHTML = checklistItems.map((item, index) => `
-                <div class="checklist-item">
-                    <input type="checkbox" id="check_${index}" 
-                        ${userChecklist[item] ? 'checked' : ''}
-                        onchange="saveChecklist('${item}', this.checked)">
-                    <label for="check_${index}">${item}</label>
-                </div>
-            `).join('');
-        }
+    const value = parseInt(progEl.value) || 0;
+    label.textContent = value + '%';
+    bar.style.width   = value + '%';
+}
+
+function updatePersonalProgressBar() {
+    const progEl = document.getElementById('personalProgress');
+    const label  = document.getElementById('personalProgressLabel');
+    const bar    = document.getElementById('personalProgressBar');
+    if (!progEl || !label || !bar) return;
+
+    const value = parseInt(progEl.value) || 0;
+    label.textContent = value + '%';
+    bar.style.width   = value + '%';
+}
+
+// type: 'shared' | 'personal'
+function renderProgressHistory(type) {
+    if (!objectives.shared) objectives.shared = {};
+    if (!objectives.byUser) objectives.byUser = {};
+
+    let historyEl;
+    let log = [];
+
+    if (type === 'shared') {
+        historyEl = document.getElementById('sharedProgressHistory');
+        log = objectives.shared.progressLog || [];
+    } else {
+        historyEl = document.getElementById('personalProgressHistory');
+        const userObj = objectives.byUser[currentUser] || {};
+        log = userObj.progressLog || [];
+    }
+
+    if (!historyEl) return;
+
+    if (!log.length) {
+        historyEl.innerHTML = '<em>No hay avances registrados aún.</em>';
+        return;
+    }
+
+    // Ordenar por fecha
+    log.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+    historyEl.innerHTML = `
+        <strong>Historial de avances:</strong>
+        <ul style="margin-top:8px; padding-left:18px;">
+            ${log.map(item => `
+                <li>${item.date || 'Sin fecha'}: <strong>${item.value}%</strong></li>
+            `).join('')}
+        </ul>
+    `;
+}
+function addSharedProgress() {
+    if (!objectives.shared) objectives.shared = {};
+    if (!objectives.shared.progressLog) objectives.shared.progressLog = [];
+
+    const dateEl  = document.getElementById('sharedProgressDate');
+    const valueEl = document.getElementById('sharedProgressValue');
+
+    const date  = dateEl.value;
+    const value = parseInt(valueEl.value);
+
+    if (!date || isNaN(value) || value < 0 || value > 100) {
+        alert('Por favor ingresa una fecha y un porcentaje válido (0-100) para el objetivo de equipo.');
+        return;
+    }
+
+    objectives.shared.progressLog.push({ date, value });
+    objectives.shared.progress = value;
+
+    document.getElementById('sharedProgress').value = value;
+    updateTeamProgressBar();
+    renderProgressHistory('shared');
+    saveObjectives();
+
+    dateEl.value = '';
+    valueEl.value = '';
+}
+
+function addPersonalProgress() {
+    if (!objectives.byUser) objectives.byUser = {};
+    const userObj = objectives.byUser[currentUser] || {};
+
+    if (!userObj.progressLog) userObj.progressLog = [];
+
+    const dateEl  = document.getElementById('personalProgressDate');
+    const valueEl = document.getElementById('personalProgressValue');
+
+    const date  = dateEl.value;
+    const value = parseInt(valueEl.value);
+
+    if (!date || isNaN(value) || value < 0 || value > 100) {
+        alert('Por favor ingresa una fecha y un porcentaje válido (0-100) para tu objetivo personal.');
+        return;
+    }
+
+    userObj.progressLog.push({ date, value });
+    userObj.progress = value;
+
+    objectives.byUser[currentUser] = userObj;
+
+    document.getElementById('personalProgress').value = value;
+    updatePersonalProgressBar();
+    renderProgressHistory('personal');
+    saveObjectives();
+
+    dateEl.value = '';
+    valueEl.value = '';
+}
 
         function saveChecklist(item, checked) {
             if (!checklists[currentUser]) checklists[currentUser] = {};
@@ -2610,7 +2752,35 @@ function downloadMemberCV(memberId) {
             loadMemberHours(memberId);
             loadMemberObjectives(memberId);
         }
+        function loadMemberObjectives(memberId) {
+    const shared = objectives.shared || {};
+    const byUser = objectives.byUser || {};
+    const obj    = byUser[memberId] || {};
 
+    document.getElementById('memberNameGoals').textContent  = teamMembers[memberId].name;
+    document.getElementById('memberNameGoals2').textContent = teamMembers[memberId].name;
+
+    document.getElementById('memberSharedGoal').value       = shared.goal || '';
+    document.getElementById('memberSharedTargetDate').value = shared.targetDate || '';
+    document.getElementById('memberPersonalGoal').value     = obj.personalGoal || '';
+
+    const sharedProg   = shared.progress != null ? shared.progress : 0;
+    const personalProg = obj.progress != null ? obj.progress : 0;
+
+    const sharedLabel = document.getElementById('memberSharedProgressLabel');
+    const sharedBar   = document.getElementById('memberSharedProgressBar');
+    if (sharedLabel && sharedBar) {
+        sharedLabel.textContent = sharedProg + '%';
+        sharedBar.style.width   = sharedProg + '%';
+    }
+
+    const label = document.getElementById('memberProgressLabel');
+    const bar   = document.getElementById('memberProgressBar');
+    if (label && bar) {
+        label.textContent = personalProg + '%';
+        bar.style.width   = personalProg + '%';
+    }
+}
         function loadMemberCharts(memberId) {
             const member = teamMembers[memberId];
             const memberActs = activities.filter(a => a.user === memberId);
