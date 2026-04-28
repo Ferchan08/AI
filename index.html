@@ -3108,11 +3108,17 @@ function downloadMemberCV(memberId) {
         }
 
         function switchTab(tab) {
-            document.querySelectorAll('#becarioDashboard .nav-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('#becarioDashboard .tab-content').forEach(c => c.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById(`tab-${tab}`).classList.add('active');
-        }
+  // Quitar activo de TODOS los tabs de becario, incluido goals (aunque esté fuera del div)
+  document.querySelectorAll('#tab-activities,#tab-hours,#tab-personal,#tab-checklist,#tab-goals')
+    .forEach(c => c.classList.remove('active'));
+
+  // Quitar activo de los botones
+  document.querySelectorAll('#becarioDashboard .nav-tab').forEach(t => t.classList.remove('active'));
+
+  // Activar el botón clicado y el tab correspondiente
+  event.target.classList.add('active');
+  document.getElementById(`tab-${tab}`).classList.add('active');
+}
 
         function switchSupervisorTab(tab) {
             document.querySelectorAll('#supervisorDashboard .nav-tab').forEach(t => t.classList.remove('active'));
