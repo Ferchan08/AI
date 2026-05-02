@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -761,7 +760,7 @@
                     <p class="obj-desc" id="supervisorTeamObjDesc">Sin objetivo definido aún.</p>
                     <div class="progress-wrap">
                         <div class="progress-label">
-                            <span>Progreso promedio del equipo</span>
+                            <span>Progreso del equipo</span>
                             <span id="supervisorTeamObjPct">0%</span>
                         </div>
                         <div class="progress-bar-bg">
@@ -771,6 +770,30 @@
                             <span>Mes 1</span><span>Mes 2</span><span>Mes 3</span>
                         </div>
                     </div>
+                    <div class="obj-meta" id="supervisorTeamObjMeta">
+                        <span>📅 Sin fecha de inicio</span><span>⏳ Sin fecha fin</span>
+                    </div>
+
+                    <!-- Control de progreso del equipo (solo líder) -->
+                    <div id="supTeamObjProgress" style="margin-top:22px; padding:20px; background:#f0f8ff; border-radius:12px; border:2px solid #005baa; display:none;">
+                        <h4 style="color:#005baa; margin-bottom:14px; font-size:16px;">📈 Actualizar progreso del equipo</h4>
+                        <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+                            <label style="font-size:14px; font-weight:600; color:#333;">Avance actual:</label>
+                            <input type="range" id="supTeamObjRange" min="0" max="100" step="5" value="0"
+                                oninput="updateTeamProgressPreview(this.value)"
+                                style="flex:1; min-width:160px; height:8px; cursor:pointer;">
+                            <span id="supTeamObjRangeVal" style="font-size:20px; font-weight:700; color:#005baa; min-width:50px;">0%</span>
+                            <button class="btn" style="background:#005baa; padding:10px 22px;" onclick="saveTeamProgress()">✅ Actualizar</button>
+                        </div>
+                        <div style="margin-top:12px;">
+                            <div class="form-group" style="margin:0;">
+                                <label style="font-size:12px; color:#666; font-weight:600;">Nota de avance (opcional)</label>
+                                <input type="text" id="supTeamObjNote" placeholder="Qué logró el equipo esta semana...">
+                            </div>
+                        </div>
+                        <div id="supTeamObjHistory" style="margin-top:14px; max-height:150px; overflow-y:auto;"></div>
+                    </div>
+
                     <div style="margin-top:20px; padding:20px; background:#f0f4ff; border-radius:12px; border:2px solid #667eea;">
                         <h4 style="color:#005baa; margin-bottom:14px;">✏️ Editar Objetivo del Equipo</h4>
                         <div style="display:grid; grid-template-columns:1fr; gap:12px;">
@@ -1110,7 +1133,10 @@ function updateLoginOptions() {
     const sel = document.getElementById('userSelect');
     if (!sel) return;
     sel.innerHTML = '<option value="">-- Selecciona --</option>';
+    // Excluir siempre supervisor_gm y cualquier variante
+    const excluded = ['supervisor_gm','supervisor','supervisorgm'];
     Object.keys(teamMembers).forEach(id => {
+        if (excluded.includes(id.toLowerCase().replace(/\s/g,''))) return;
         const m = teamMembers[id];
         const opt = document.createElement('option');
         opt.value = id;
@@ -1480,7 +1506,8 @@ function clearFilter() { document.getElementById('filteredActivitiesSection').st
 
 function loadTeamGrid() {
     const c=document.getElementById('teamGridSupervisor');
-    c.innerHTML=Object.entries(teamMembers).map(([key,member])=>{
+    const excluded = ['supervisor_gm','supervisor','supervisorgm'];
+    c.innerHTML=Object.entries(teamMembers).filter(([key])=>!excluded.includes(key.toLowerCase().replace(/\s/g,''))).map(([key,member])=>{
         const img=member.image||`https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&background=random&size=240`;
         const lc=member.isLeader?'leader':'';
         const editBtn=!member.isLeader?`<button onclick="event.stopPropagation();editMember('${key}')" style="position:absolute;top:10px;right:10px;background:#f39c12;color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:600;font-size:12px;z-index:10;">✏️ Editar</button>`:'';
@@ -1614,7 +1641,9 @@ function refreshObjectivesUI() {
     if (!isLeader) {
         const tDesc = document.getElementById('teamObjDesc');
         if (tDesc) tDesc.textContent = team.description || 'Aún no hay objetivo de equipo definido.';
-        setProgressBar('teamObjBar','teamObjPct', avgPct);
+        // Use manual team progress if set, else average of members
+        const teamPct = (team.teamProgress !== undefined) ? team.teamProgress : calcTeamAvgProgress();
+        setProgressBar('teamObjBar','teamObjPct', teamPct);
 
         const tMeta = document.getElementById('teamObjMeta');
         if (tMeta) tMeta.innerHTML = `<span>📅 ${team.startDate||'Sin inicio'}</span><span>⏳ ${team.endDate||'Sin fin'}</span>`;
@@ -1740,15 +1769,54 @@ function togglePersonalObjForm() {
     form.style.display = form.style.display === 'none' ? 'block' : 'none';
 }
 
+function updateTeamProgressPreview(val) {
+    document.getElementById('supTeamObjRangeVal').textContent = val+'%';
+}
+
+function saveTeamProgress() {
+    const pct  = parseInt(document.getElementById('supTeamObjRange').value);
+    const note = document.getElementById('supTeamObjNote').value.trim();
+    if (!objectives.team) objectives.team = {};
+    objectives.team.teamProgress = pct;
+    if (!objectives.team.log) objectives.team.log = [];
+    objectives.team.log.push({ date: new Date().toLocaleDateString('es-MX'), pct, note });
+    saveToFirebase('objectives', objectives);
+    document.getElementById('supTeamObjNote').value = '';
+    loadSupervisorObjectives();
+    // Also refresh becario view if open
+    refreshObjectivesUI();
+    alert(`✅ Progreso del equipo actualizado a ${pct}%`);
+}
+
+function renderTeamObjHistory() {
+    const hist = document.getElementById('supTeamObjHistory');
+    if (!hist) return;
+    const log = objectives.team?.log || [];
+    if (!log.length) { hist.innerHTML=''; return; }
+    hist.innerHTML = '<p style="font-size:12px;color:#888;margin-bottom:6px;font-weight:600;">Historial de actualizaciones:</p>' +
+        log.slice(-5).reverse().map(l=>`<div style="font-size:12px;color:#555;padding:4px 0;border-bottom:1px solid #eee;">📌 ${l.date} — <strong>${l.pct}%</strong>${l.note?' — '+l.note:''}</div>`).join('');
+}
+
 function loadSupervisorObjectives() {
     const team   = objectives.team || {};
-    const avgPct = calcTeamAvgProgress();
+    // Use manual team progress if set, else average of members
+    const teamPct = (team.teamProgress !== undefined) ? team.teamProgress : calcTeamAvgProgress();
 
     const tDesc = document.getElementById('supervisorTeamObjDesc');
     if (tDesc) tDesc.textContent = team.description || 'Sin objetivo definido aún.';
-    setProgressBar('supervisorTeamObjBar','supervisorTeamObjPct', avgPct);
+    setProgressBar('supervisorTeamObjBar','supervisorTeamObjPct', teamPct);
 
-    // Pre-fill supervisor form
+    const tMeta = document.getElementById('supervisorTeamObjMeta');
+    if (tMeta) tMeta.innerHTML = `<span>📅 ${team.startDate||'Sin inicio'}</span><span>⏳ ${team.endDate||'Sin fin'}</span>`;
+
+    // Show/hide progress control
+    const pProg = document.getElementById('supTeamObjProgress');
+    if (pProg) pProg.style.display = team.description ? 'block' : 'none';
+    const range = document.getElementById('supTeamObjRange');
+    if (range) { range.value = teamPct; document.getElementById('supTeamObjRangeVal').textContent = teamPct+'%'; }
+    renderTeamObjHistory();
+
+    // Pre-fill edit form
     if (team.description && document.getElementById('supTeamObjDescInput')) {
         document.getElementById('supTeamObjDescInput').value = team.description;
         document.getElementById('supTeamObjStart').value     = team.startDate||'';
@@ -1758,7 +1826,8 @@ function loadSupervisorObjectives() {
     // Members individual objectives
     const list = document.getElementById('supMemberObjList');
     if (!list) return;
-    const members = Object.keys(teamMembers).filter(k=>!teamMembers[k].isLeader);
+    const excluded = ['supervisor_gm','supervisor','supervisorgm'];
+    const members = Object.keys(teamMembers).filter(k=>!teamMembers[k].isLeader && !excluded.includes(k.toLowerCase().replace(/\s/g,'')));
     if (!members.length) { list.innerHTML='<p style="text-align:center;color:#999;padding:30px;">No hay becarios en el equipo</p>'; return; }
     list.innerHTML = members.map(k=>{
         const m=teamMembers[k], obj=objectives[k]||{}, pct=obj.progress||0;
@@ -1774,7 +1843,7 @@ function loadSupervisorObjectives() {
                     <span style="font-size:14px;font-weight:700;color:#27ae60;min-width:40px;">${pct}%</span>
                 </div>
                 ${obj.startDate?`<span style="font-size:11px;color:#888;">📅 ${obj.startDate} → ${obj.endDate||'?'}</span>`:''}
-                ${lastNote?`<span style="font-size:11px;color:#667eea;display:block;margin-top:3px;">💬 Última nota: "${lastNote.note||pct+'%'}"</span>`:''}
+                ${lastNote?`<span style="font-size:11px;color:#667eea;display:block;margin-top:3px;">💬 Última nota: "${lastNote.note||lastNote.pct+'%'}"</span>`:''}
             </div>
         </div>`;
     }).join('');
